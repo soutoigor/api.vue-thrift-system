@@ -20,3 +20,4 @@ Route.post('/user', 'UserController.create')
 Route.post('/login', 'UserController.login')
 
 Route.resource('category', 'CategoryController').apiOnly().middleware(['auth'])
+Route.resource('provider', 'ProviderController').apiOnly().middleware(['auth'])
