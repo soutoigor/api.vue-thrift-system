@@ -15,15 +15,14 @@ class UserController {
       const validation = await validateAll(request.all(), {
         name: 'required|min:2',
         email: 'required|email|unique:users',
-        admin: 'required|boolean',
         password: 'required|min:6'
       }, message)
 
       if(validation.fails()) {
-        return response.status(401).send({message: validation.messages()})
+        return response.status(401).send({ message: validation.messages() })
       }
 
-      const data = request.only(["name", "admin", "email", "password"])
+      const data = request.only(["name", "email", "password"])
 
       const user = await User.create(data)
 
