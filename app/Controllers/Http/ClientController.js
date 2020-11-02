@@ -1,92 +1,62 @@
 'use strict'
 
-/** @typedef {import('@adonisjs/framework/src/Request')} Request */
-/** @typedef {import('@adonisjs/framework/src/Response')} Response */
-/** @typedef {import('@adonisjs/framework/src/View')} View */
+const Client = use('App/Models/Client')
+const { validateAll } = use('Validator')
 
-/**
- * Resourceful controller for interacting with clients
- */
+const validateClient = async ({ attributes, isCreate }) => {
+  const message = {
+    'name.required': 'Esse campo é obrigatorio',
+    'name.string': 'Nome precisa ser uma String',
+    'address.string': 'Endereço precisa ser uma String',
+    'contact.string': 'Contato precisa ser uma String',
+  }
+
+  const validations = {
+    name: 'string',
+    address: 'string',
+    contact: 'string',
+  }
+
+  if (isCreate) validations.name = `required|${validations.name}`
+
+  const validation = await validateAll(attributes, validations, message)
+
+  if(validation.fails()) {
+    throw { message: validation.messages() }
+  }
+}
+
 class ClientController {
-  /**
-   * Show a list of all clients.
-   * GET clients
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async index ({ request, response, view }) {
+  async index () {
+    const clients = await Client
+      .query()
+      .orderBy('name', 'asc')
+      .fetch()
+
+    return { clients }
   }
 
-  /**
-   * Render a form to be used for creating a new client.
-   * GET clients/create
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async create ({ request, response, view }) {
-  }
-
-  /**
-   * Create/save a new client.
-   * POST clients
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   */
   async store ({ request, response }) {
+    try {
+      await validateClient({ attributes: request.all(), isCreate: true })
+      const client = await Client.create(request.all())
+      return client
+    } catch (error) {
+      return response.status(400).send(error.message)
+    }
   }
 
-  /**
-   * Display a single client.
-   * GET clients/:id
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async show ({ params, request, response, view }) {
-  }
-
-  /**
-   * Render a form to update an existing client.
-   * GET clients/:id/edit
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async edit ({ params, request, response, view }) {
-  }
-
-  /**
-   * Update client details.
-   * PUT or PATCH clients/:id
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   */
   async update ({ params, request, response }) {
-  }
+    try {
+      await validateClient({ attributes: request.all(), isCreate: false })
+      const client = await Client.find(params.id)
+      client.merge({ ...request.all() })
+      await client.save()
 
-  /**
-   * Delete a client with id.
-   * DELETE clients/:id
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   */
-  async destroy ({ params, request, response }) {
+      return client
+    } catch(error) {
+      return response.status(400).send(error.message)
+    }
   }
 }
 

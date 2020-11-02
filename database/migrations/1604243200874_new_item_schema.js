@@ -12,7 +12,7 @@ class NewItemSchema extends Schema {
         .references('id')
         .inTable('providers')
       table.date('date').notNullable()
-      table.float('price').notNullable()
+      table.float('buy_price').notNullable()
       table.timestamps()
     })
   }
