@@ -54,7 +54,9 @@ class ProviderController {
     try {
       await validateProvider({ attributes: request.all(), isCreate: false })
       const provider = await Provider.find(params.id)
+
       provider.merge({ ...request.all() })
+
       await provider.save()
 
       return provider
