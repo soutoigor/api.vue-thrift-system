@@ -8,7 +8,7 @@ class ItemSchema extends Schema {
     this.create('items', (table) => {
       table.increments()
       table.string('name', 100).notNullable()
-      table.string('photo_url').nullable()
+      table.string('photo_name').nullable()
       table.float('price').notNullable()
       table.boolean('sold').defaultTo(false)
       table.integer('new_item_id')
