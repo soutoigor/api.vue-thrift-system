@@ -7,6 +7,9 @@ class Sell extends Model {
   client() {
     return this.belongsTo('App/Models/Client')
   }
+  itemSell() {
+    return this.hasMany('App/Models/ItemSell')
+  }
 }
 
 module.exports = Sell

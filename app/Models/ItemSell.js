@@ -5,10 +5,10 @@ const Model = use('Model')
 
 class ItemSell extends Model {
   item() {
-    return this.hasMany('App/Models/Item')
+    return this.belongsTo('App/Models/Item')
   }
   sell() {
-    return this.hasMany('App/Models/Sell')
+    return this.belongsTo('App/Models/Sell')
   }
 }
 

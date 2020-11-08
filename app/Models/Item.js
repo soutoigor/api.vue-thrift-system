@@ -10,6 +10,9 @@ class Item extends Model {
   category() {
     return this.belongsTo('App/Models/Category')
   }
+  itemSell() {
+    return this.hasMany('App/Models/ItemSell')
+  }
 }
 
 module.exports = Item

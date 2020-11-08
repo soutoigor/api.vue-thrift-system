@@ -59,12 +59,14 @@ class ItemController {
       provider_id,
       start_date,
       end_date,
+      sold,
      } = request.get()
 
     const itemsQuery = Item.query()
 
     if (name) itemsQuery.where('name', 'like', `%${name}%`)
     if (category_id) itemsQuery.where('category_id', category_id)
+    if (sold) itemsQuery.where('sold', sold === 'true')
 
     if (provider_id) {
       itemsQuery.whereHas('newItem.provider', (builder) => {

@@ -1,92 +1,141 @@
 'use strict'
 
-/** @typedef {import('@adonisjs/framework/src/Request')} Request */
-/** @typedef {import('@adonisjs/framework/src/Response')} Response */
-/** @typedef {import('@adonisjs/framework/src/View')} View */
+const Sell = use('App/Models/Sell')
+const ItemSell = use('App/Models/ItemSell')
+const Item = use('App/Models/Item')
+const { validateAll } = use('Validator')
 
-/**
- * Resourceful controller for interacting with sells
- */
+const validateSell = async ({ attributes, isCreate }) => {
+  const message = {
+    'shipping_price.required': 'Esse campo é obrigatorio',
+    'shipping_price.number': 'Frete inválido',
+    'date.required': 'Esse campo é obrigatorio',
+    'date.date': 'Data inválida',
+    'items.required': 'Esse campo é obrigatorio',
+    'items.array': 'item_id inválido',
+    'client_id.required': 'Esse campo é obrigatorio',
+    'client_id.number': 'client_id inválido',
+  }
+
+  const validations = {
+    shipping_price: 'number',
+    date: 'date',
+    client_id: 'number',
+  }
+
+  if (isCreate) {
+    validations.items = 'array'
+    const requiredFields = [
+      'date',
+      'shipping_price',
+      'items',
+      'client_id',
+    ]
+    for (const field of requiredFields) {
+      validations[field] = `required|${validations[field]}`
+    }
+  }
+
+  const validation = await validateAll(attributes, validations, message)
+
+  if(validation.fails()) {
+    throw { message: validation.messages() }
+  }
+}
+
 class SellController {
-  /**
-   * Show a list of all sells.
-   * GET sells
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async index ({ request, response, view }) {
+
+  async index ({ request, response }) {
+    try {
+      const {
+        item_id,
+        client_id,
+        start_date,
+        end_date,
+      } = request.get()
+
+      const sellQuery = Sell.query()
+
+      if (item_id) {
+        sellQuery.whereHas('itemSell', (builder) => {
+          builder.where('item_id', item_id)
+        })
+      }
+
+      if (client_id) sellQuery.where('client_id', client_id)
+
+      if (start_date && end_date) {
+        sellQuery.whereBetween('date', [start_date, end_date])
+      }
+
+      return sellQuery
+        .with('itemSell.item')
+        .fetch()
+    } catch (error) {
+      return response.status(400).send(error.message)
+    }
   }
 
-  /**
-   * Render a form to be used for creating a new sell.
-   * GET sells/create
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async create ({ request, response, view }) {
-  }
-
-  /**
-   * Create/save a new sell.
-   * POST sells
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   */
   async store ({ request, response }) {
+    try {
+      await validateSell({ attributes: request.all(), isCreate: true })
+      const {
+        date,
+        shipping_price,
+        client_id,
+        items,
+      } = request.all()
+
+      const itemsToUpdate = await Item
+        .query()
+        .whereIn('id', items)
+        .fetch()
+
+      const soldItems = itemsToUpdate.rows.filter(item => item.sold)
+
+      if (soldItems.length > 0) {
+        throw { message: 'Erro, remova os itens que ja foram vendidos' }
+      }
+
+      const sell = await Sell.create({
+        date,
+        shipping_price,
+        client_id,
+      })
+      const itemSells = items.map(item => ({ item_id: item, sell_id: sell.id }))
+      await ItemSell.createMany(itemSells)
+      await Item
+        .query()
+        .update({ sold: true })
+        .whereIn('id', items)
+
+      return sell
+    } catch (error) {
+      return response.status(400).send(error.message)
+    }
   }
 
-  /**
-   * Display a single sell.
-   * GET sells/:id
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async show ({ params, request, response, view }) {
-  }
-
-  /**
-   * Render a form to update an existing sell.
-   * GET sells/:id/edit
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async edit ({ params, request, response, view }) {
-  }
-
-  /**
-   * Update sell details.
-   * PUT or PATCH sells/:id
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   */
   async update ({ params, request, response }) {
-  }
+    try {
+      await validateSell({ attributes: request.all(), isCreate: false })
+      const {
+        date,
+        shipping_price,
+        client_id,
+      } = request.all()
 
-  /**
-   * Delete a sell with id.
-   * DELETE sells/:id
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   */
-  async destroy ({ params, request, response }) {
+      const sell = await Sell.find(params.id)
+
+      if (date) sell.date = date
+      if (shipping_price) sell.shipping_price = shipping_price
+      if (client_id) sell.client_id = client_id
+
+      await sell.save()
+
+      return sell
+    } catch (error) {
+      return response.status(400).send(error.message)
+    }
   }
 }
 
