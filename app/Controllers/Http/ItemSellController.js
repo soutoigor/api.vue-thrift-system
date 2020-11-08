@@ -1,92 +1,51 @@
 'use strict'
 
-/** @typedef {import('@adonisjs/framework/src/Request')} Request */
-/** @typedef {import('@adonisjs/framework/src/Response')} Response */
-/** @typedef {import('@adonisjs/framework/src/View')} View */
+const ItemSell = use('App/Models/ItemSell')
+const Sell = use('App/Models/Sell')
+const Item = use('App/Models/Item')
+const { validateAll } = use('Validator')
 
-/**
- * Resourceful controller for interacting with itemsells
- */
 class ItemSellController {
-  /**
-   * Show a list of all itemsells.
-   * GET itemsells
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async index ({ request, response, view }) {
-  }
 
-  /**
-   * Render a form to be used for creating a new itemsell.
-   * GET itemsells/create
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async create ({ request, response, view }) {
-  }
-
-  /**
-   * Create/save a new itemsell.
-   * POST itemsells
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   */
   async store ({ request, response }) {
+    try {
+      const message = {
+        'item_id.required': 'Esse campo é obrigatorio',
+        'item_id.number': 'item_id invalido',
+        'sell_id.required': 'Esse campo é obrigatorio',
+        'sell_id.number': 'sell_id inválido',
+      }
+
+      const validations = {
+        item_id: 'required|number',
+        sell_id: 'required|number',
+      }
+
+      const validation = await validateAll(request.all(), validations, message)
+
+      if(validation.fails()) {
+        throw { message: validation.messages() }
+      }
+
+      const { item_id, sell_id } = request.all()
+      await ItemSell.create({ item_id, sell_id })
+
+      await Item.query().update({ sold: true }).where('id', item_id)
+
+      return Sell.query().where('id', sell_id).with('itemSell.item').fetch()
+    } catch (error) {
+      return response.status(400).send(error.message)
+    }
   }
 
-  /**
-   * Display a single itemsell.
-   * GET itemsells/:id
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async show ({ params, request, response, view }) {
-  }
-
-  /**
-   * Render a form to update an existing itemsell.
-   * GET itemsells/:id/edit
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async edit ({ params, request, response, view }) {
-  }
-
-  /**
-   * Update itemsell details.
-   * PUT or PATCH itemsells/:id
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   */
-  async update ({ params, request, response }) {
-  }
-
-  /**
-   * Delete a itemsell with id.
-   * DELETE itemsells/:id
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   */
   async destroy ({ params, request, response }) {
+    const itemSell = await ItemSell.find(params.id)
+
+    await Item.query().update({ sold: false }).where('id', itemSell.item_id)
+
+    await itemSell.delete()
+
+    return {}
   }
 }
 
