@@ -8,7 +8,7 @@ const validateItem = async ({ attributes, isCreate }) => {
   const message = {
     'name.required': 'name é obrigatorio',
     'name.string': 'Nome precisa ser uma String',
-    'photo_url.string': 'photo_url precisa ser uma String',
+    'photo_name.string': 'photo_name precisa ser uma String',
     'date.required': 'date é obrigatorio',
     'date.date': 'Data inválida',
     'buy_price.required': 'Esse campo é obrigatorio',
@@ -20,7 +20,7 @@ const validateItem = async ({ attributes, isCreate }) => {
 
   const validations = {
     name: 'string',
-    photo_url: 'string',
+    photo_name: 'string',
     date: 'date',
     buy_price: 'number',
     price: 'number',
@@ -49,7 +49,7 @@ const validateItem = async ({ attributes, isCreate }) => {
 }
 
 const newItemAttributesName = ['date', 'buy_price', 'provider_id']
-const itemAttributesName = ['name', 'photo_url', 'category_id', 'price']
+const itemAttributesName = ['name', 'photo_name', 'category_id', 'price']
 
 class ItemController {
   async index ({ request }) {
