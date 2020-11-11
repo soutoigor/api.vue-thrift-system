@@ -13,6 +13,7 @@ class NewItemSchema extends Schema {
         .inTable('providers')
       table.date('date').notNullable()
       table.float('buy_price').notNullable()
+      table.timestamp('deleted_at').nullable()
       table.timestamps()
     })
   }

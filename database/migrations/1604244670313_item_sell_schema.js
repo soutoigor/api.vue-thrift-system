@@ -15,6 +15,7 @@ class ItemSellSchema extends Schema {
         .unsigned()
         .references('id')
         .inTable('items')
+      table.timestamp('deleted_at').nullable()
       table.timestamps()
     })
   }

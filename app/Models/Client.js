@@ -4,6 +4,11 @@
 const Model = use('Model')
 
 class Client extends Model {
+  static boot() {
+    super.boot()
+    this.addTrait('@provider:Lucid/SoftDeletes')
+  }
+
   sell() {
     return this.hasMany('App/Models/Sell')
   }

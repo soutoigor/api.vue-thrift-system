@@ -58,6 +58,18 @@ class ClientController {
       return response.status(400).send(error.message)
     }
   }
+
+  async destroy ({ params }) {
+    const client = await Client.find(params.id)
+
+    if (!client) {
+      return response.status(404).send('client not found')
+    }
+
+    await client.delete()
+
+    return {}
+  }
 }
 
 module.exports = ClientController

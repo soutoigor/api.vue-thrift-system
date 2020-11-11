@@ -11,6 +11,7 @@ class ProviderSchema extends Schema {
       table.string('address').nullable()
       table.string('telephone', 20).nullable()
       table.string('contact', 100).nullable()
+      table.timestamp('deleted_at').nullable()
       table.timestamps()
     })
   }

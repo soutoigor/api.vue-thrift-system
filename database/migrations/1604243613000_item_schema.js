@@ -19,6 +19,7 @@ class ItemSchema extends Schema {
         .unsigned()
         .references('id')
         .inTable('categories')
+      table.timestamp('deleted_at').nullable()
       table.timestamps()
     })
   }

@@ -70,6 +70,7 @@ class SellController {
 
       return sellQuery
         .with('itemSell.item')
+        .with('client')
         .fetch()
     } catch (error) {
       return response.status(400).send(error.message)
@@ -136,6 +137,22 @@ class SellController {
     } catch (error) {
       return response.status(400).send(error.message)
     }
+  }
+
+  async destroy ({ params, response }) {
+    const sell = await Sell.find(params.id)
+    if (!sell) {
+      return response.status(404).send('sell not found')
+    }
+    const itemSells = await ItemSell.query().where('sell_id', sell.id).fetch()
+
+    const itemsToUpdate = itemSells.rows.map(({ item_id }) => item_id)
+
+    await Item.query().update({ sold: false }).whereIn('id', itemsToUpdate)
+    await ItemSell.query().where('sell_id', sell.id).delete()
+    await sell.delete()
+
+    return {}
   }
 }
 
