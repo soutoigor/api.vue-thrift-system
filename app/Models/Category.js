@@ -4,6 +4,11 @@
 const Model = use('Model')
 
 class Category extends Model {
+  static boot() {
+    super.boot()
+    this.addTrait('@provider:Lucid/SoftDeletes')
+  }
+
   product() {
     return this.hasMany('App/Models/Product')
   }

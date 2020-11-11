@@ -51,6 +51,16 @@ class CategoryController {
       return response.status(400).send(error.message)
     }
   }
+
+  async destroy ({ params }) {
+    const category = await Category.find(params.id)
+    if (!category) {
+      return response.status(404).send('category not found')
+    }
+    await category.delete()
+
+    return {}
+  }
 }
 
 module.exports = CategoryController

@@ -11,8 +11,10 @@ class SellSchema extends Schema {
       table.float('shipping_price').notNullable()
       table.integer('client_id')
         .unsigned()
+        .notNullable()
         .references('id')
         .inTable('clients')
+      table.timestamp('deleted_at').nullable()
       table.timestamps()
     })
   }

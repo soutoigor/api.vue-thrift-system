@@ -131,6 +131,21 @@ class ItemController {
       return response.status(400).send(error.message)
     }
   }
+
+  async destroy ({ params }) {
+    const item = await Item.find(params.id)
+
+    if (!item) {
+      return response.status(404).send('item not found')
+    }
+
+    const newItem = await NewItem.find(item.new_item_id)
+
+    await item.delete()
+    await newItem.delete()
+
+    return {}
+  }
 }
 
 module.exports = ItemController

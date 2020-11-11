@@ -64,6 +64,18 @@ class ProviderController {
       return response.status(400).send(error.message)
     }
   }
+
+  async destroy ({ params }) {
+    const provider = await Provider.find(params.id)
+
+    if (!provider) {
+      return response.status(404).send('provider not found')
+    }
+
+    await provider.delete()
+
+    return {}
+  }
 }
 
 module.exports = ProviderController

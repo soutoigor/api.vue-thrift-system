@@ -10,6 +10,7 @@ class ClientSchema extends Schema {
       table.string('name', 100).notNullable()
       table.string('contact', 100).nullable()
       table.string('address').nullable()
+      table.timestamp('deleted_at').nullable()
       table.timestamps()
     })
   }

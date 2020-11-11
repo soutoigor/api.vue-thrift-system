@@ -4,11 +4,16 @@
 const Model = use('Model')
 
 class Item extends Model {
+  static boot() {
+    super.boot()
+    this.addTrait('@provider:Lucid/SoftDeletes')
+  }
+
   newItem() {
     return this.belongsTo('App/Models/NewItem')
   }
   category() {
-    return this.belongsTo('App/Models/Category')
+    return this.belongsTo('App/Models/Category').withTrashed()
   }
   itemSell() {
     return this.hasMany('App/Models/ItemSell')
