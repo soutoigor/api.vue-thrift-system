@@ -1,28 +1,26 @@
-# Adonis API application
+# API Vue Thrift System
 
-This is the boilerplate for creating an API server in AdonisJs, it comes pre-configured with.
-
-1. Bodyparser
-2. Authentication
-3. CORS
-4. Lucid ORM
-5. Migrations and seeds
+The Backend for the Vue Thrift System.
 
 ## Setup
 
-Use the adonis command to install the blueprint
+- Create a `.env` file like the `.env.example`.  
 
+- Run a Postgres container with Docker:
 ```bash
-adonis new yardstick --api-only
+docker run -d -p 5432:5432 --name market -e POSTGRES_PASSWORD=123123 postgres
+```
+It will run a container with Postgres running in port `5432`, named "market", and set the database password as "123123".
+If you change some value, remember to change in the `.env` too. ;)
+
+- Run `npm install`.
+
+- Run migrations:
+```bash
+node ace migrate:run
 ```
 
-or manually clone the repo and then run `npm install`.
-
-
-### Migrations
-
-Run the following command to run startup migrations.
-
-```js
-adonis migration:run
+- Run the server:
+```bash
+npm start
 ```
