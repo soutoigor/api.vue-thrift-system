@@ -31,29 +31,38 @@ const validateProvider = async ({ attributes, isCreate }) => {
 }
 
 class ProviderController {
-  async index () {
+  async index ({ auth }) {
     const providers = await Provider
       .query()
+      .where('user_id', auth.user.id)
       .orderBy('name', 'asc')
       .fetch()
 
     return { providers }
   }
 
-  async store ({ request, response }) {
+  async store ({ request, response, auth }) {
     try {
       await validateProvider({ attributes: request.all(), isCreate: true })
-      const provider = await Provider.create(request.all())
+      const provider = await Provider.create({
+        ...request.all(),
+        user_id: auth.user.id,
+      })
+
       return provider
     } catch (error) {
       return response.status(400).send(error.message)
     }
   }
 
-  async update ({ params, request, response }) {
+  async update ({ params, request, response, auth }) {
     try {
       await validateProvider({ attributes: request.all(), isCreate: false })
       const provider = await Provider.find(params.id)
+
+      if (provider.user_id !== auth.user.id) {
+        return response.status(403).send('Forbidden')
+      }
 
       provider.merge({ ...request.all() })
 
@@ -65,8 +74,12 @@ class ProviderController {
     }
   }
 
-  async destroy ({ params }) {
+  async destroy ({ params, response, auth }) {
     const provider = await Provider.find(params.id)
+
+    if (provider.user_id !== auth.user.id) {
+      return response.status(403).send('Forbidden')
+    }
 
     if (!provider) {
       return response.status(404).send('provider not found')

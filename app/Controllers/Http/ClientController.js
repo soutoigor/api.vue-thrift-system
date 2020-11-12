@@ -27,43 +27,56 @@ const validateClient = async ({ attributes, isCreate }) => {
 }
 
 class ClientController {
-  async index () {
+  async index ({ auth }) {
     const clients = await Client
       .query()
+      .where('user_id', auth.user.id)
       .orderBy('name', 'asc')
       .fetch()
 
     return { clients }
   }
 
-  async store ({ request, response }) {
+  async store ({ auth, request, response }) {
     try {
       await validateClient({ attributes: request.all(), isCreate: true })
-      const client = await Client.create(request.all())
+      const client = await Client.create({
+        ...request.all(),
+        user_id: auth.user.id,
+      })
       return client
     } catch (error) {
       return response.status(400).send(error.message)
     }
   }
 
-  async update ({ params, request, response }) {
+  async update ({ params, request, response, auth }) {
     try {
       await validateClient({ attributes: request.all(), isCreate: false })
       const client = await Client.find(params.id)
-      client.merge({ ...request.all() })
-      await client.save()
+      if (client.user_id === auth.user.id) {
+        client.merge({ ...request.all() })
+        await client.save()
 
-      return client
+        return client
+      }
+
+      return response.status(403).send('Forbidden')
     } catch(error) {
       return response.status(400).send(error.message)
     }
   }
 
-  async destroy ({ params }) {
+  async destroy ({ params, response, auth }) {
     const client = await Client.find(params.id)
+
 
     if (!client) {
       return response.status(404).send('client not found')
+    }
+
+    if (client.user_id !== auth.user.id) {
+      return response.status(403).send('Forbidden')
     }
 
     await client.delete()
