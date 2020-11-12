@@ -7,7 +7,7 @@ const { validateAll } = use('Validator')
 
 class ItemSellController {
 
-  async store ({ request, response }) {
+  async store ({ request, response, auth }) {
     try {
       const message = {
         'item_id.required': 'Esse campo é obrigatorio',
@@ -28,7 +28,11 @@ class ItemSellController {
       }
 
       const { item_id, sell_id } = request.all()
-      await ItemSell.create({ item_id, sell_id })
+      await ItemSell.create({
+        item_id,
+        sell_id,
+        user_id: auth.user.id,
+      })
 
       await Item.query().update({ sold: true }).where('id', item_id)
 
@@ -38,8 +42,16 @@ class ItemSellController {
     }
   }
 
-  async destroy ({ params, request, response }) {
+  async destroy ({ params, response, auth }) {
     const itemSell = await ItemSell.find(params.id)
+
+    if (!itemSell) {
+      return response.status(404).send('not found')
+    }
+
+    if (itemSell.user_id !== auth.user.id) {
+      return response.status(403).send('Forbidden')
+    }
 
     await Item.query().update({ sold: false }).where('id', itemSell.item_id)
 

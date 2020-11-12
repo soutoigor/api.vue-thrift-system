@@ -7,7 +7,11 @@ class CategorySchema extends Schema {
   up () {
     this.create('categories', (table) => {
       table.increments()
-      table.string('name', 100).unique().notNullable()
+      table.string('name', 100).notNullable()
+      table.integer('user_id')
+        .unsigned()
+        .references('id')
+        .inTable('users')
       table.timestamp('deleted_at').nullable()
       table.timestamps()
     })

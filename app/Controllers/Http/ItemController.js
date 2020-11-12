@@ -52,7 +52,7 @@ const newItemAttributesName = ['date', 'buy_price', 'provider_id']
 const itemAttributesName = ['name', 'photo_name', 'category_id', 'price']
 
 class ItemController {
-  async index ({ request }) {
+  async index ({ request, auth }) {
     const {
       name,
       category_id,
@@ -62,7 +62,7 @@ class ItemController {
       sold,
      } = request.get()
 
-    const itemsQuery = Item.query()
+    const itemsQuery = Item.query().where('user_id', auth.user.id)
 
     if (name) itemsQuery.where('name', 'like', `%${name}%`)
     if (category_id) itemsQuery.where('category_id', category_id)
@@ -88,14 +88,18 @@ class ItemController {
     return items
   }
 
-  async store ({ request, response }) {
+  async store ({ request, response , auth}) {
     try {
       await validateItem({ attributes: request.all(), isCreate: true })
       const newItemAttributes = request.only(newItemAttributesName)
       const itemAttributes = request.only(itemAttributesName)
 
       const newItem = await NewItem.create(newItemAttributes)
-      const item = await Item.create({ ...itemAttributes, new_item_id: newItem.id })
+      const item = await Item.create({
+        ...itemAttributes,
+        new_item_id: newItem.id,
+        user_id: auth.user.id,
+      })
 
       return { item, newItem }
     } catch (error) {
@@ -103,21 +107,25 @@ class ItemController {
     }
   }
 
-  async show ({ params }) {
+  async show ({ params, auth }) {
     return Item.query()
       .where('id', params.id)
+      .andWhere('user_id', auth.user.id)
       .with('category')
       .with('newItem.provider')
       .fetch()
   }
 
-  async update ({ params, request, response }) {
+  async update ({ params, request, response, auth }) {
     try {
       await validateItem({ attributes: request.all(), isCreate: false })
       const newItemAttributes = request.only(newItemAttributesName)
       const itemAttributes = request.only(itemAttributesName)
 
       const item = await Item.find(params.id)
+      if (item.user_id !== auth.user.id) {
+        return response.status(403).send('Forbidden')
+      }
       const newItem = await NewItem.find(item.new_item_id)
 
       item.merge({ ...itemAttributes })
@@ -132,11 +140,15 @@ class ItemController {
     }
   }
 
-  async destroy ({ params }) {
+  async destroy ({ params, response, auth }) {
     const item = await Item.find(params.id)
 
     if (!item) {
       return response.status(404).send('item not found')
+    }
+
+    if (item.user_id !== auth.user.id) {
+      return response.status(403).send('Forbidden')
     }
 
     const newItem = await NewItem.find(item.new_item_id)

@@ -45,7 +45,7 @@ const validateSell = async ({ attributes, isCreate }) => {
 
 class SellController {
 
-  async index ({ request, response }) {
+  async index ({ request, response, auth }) {
     try {
       const {
         item_id,
@@ -54,7 +54,7 @@ class SellController {
         end_date,
       } = request.get()
 
-      const sellQuery = Sell.query()
+      const sellQuery = Sell.query().where('user_id', auth.user.id)
 
       if (item_id) {
         sellQuery.whereHas('itemSell', (builder) => {
@@ -77,7 +77,7 @@ class SellController {
     }
   }
 
-  async store ({ request, response }) {
+  async store ({ request, response, auth }) {
     try {
       await validateSell({ attributes: request.all(), isCreate: true })
       const {
@@ -102,13 +102,21 @@ class SellController {
         date,
         shipping_price,
         client_id,
+        user_id: auth.user.id,
       })
-      const itemSells = items.map(item => ({ item_id: item, sell_id: sell.id }))
+
+      const itemSells = items.map(item => ({
+        item_id: item,
+        sell_id: sell.id,
+        user_id: auth.user.id,
+      }))
+
       await ItemSell.createMany(itemSells)
       await Item
         .query()
         .update({ sold: true })
         .whereIn('id', items)
+        .andWhere('user_id', auth.user.id)
 
       return sell
     } catch (error) {
@@ -116,7 +124,7 @@ class SellController {
     }
   }
 
-  async update ({ params, request, response }) {
+  async update ({ params, request, response, auth }) {
     try {
       await validateSell({ attributes: request.all(), isCreate: false })
       const {
@@ -126,6 +134,10 @@ class SellController {
       } = request.all()
 
       const sell = await Sell.find(params.id)
+
+      if (sell.user_id !== auth.user.id) {
+        return response.status(403).send('Forbidden')
+      }
 
       if (date) sell.date = date
       if (shipping_price) sell.shipping_price = shipping_price
@@ -139,11 +151,17 @@ class SellController {
     }
   }
 
-  async destroy ({ params, response }) {
+  async destroy ({ params, response, auth }) {
     const sell = await Sell.find(params.id)
+
     if (!sell) {
       return response.status(404).send('sell not found')
     }
+
+    if (sell.user_id !== auth.user.id) {
+      return response.status(403).send('Forbidden')
+    }
+
     const itemSells = await ItemSell.query().where('sell_id', sell.id).fetch()
 
     const itemsToUpdate = itemSells.rows.map(({ item_id }) => item_id)
