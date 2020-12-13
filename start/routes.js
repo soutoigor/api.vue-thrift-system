@@ -2,8 +2,9 @@
 
 const Route = use('Route')
 
-Route.post('/user', 'UserController.create')
+Route.post('/user', 'UserController.store')
 Route.post('/login', 'UserController.login')
+Route.get('/user', 'UserController.show').middleware(['auth'])
 
 Route.resource('category', 'CategoryController').apiOnly().middleware(['auth'])
 Route.resource('provider', 'ProviderController').apiOnly().middleware(['auth'])

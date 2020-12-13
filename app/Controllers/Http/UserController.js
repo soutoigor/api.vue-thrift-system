@@ -4,9 +4,8 @@ const User = use('App/Models/User')
 const { validateAll } = use('Validator')
 
 class UserController {
-  async create({ request, response }) {
+  async store({ request, response }) {
     try {
-
       const message = {
         'name.required': 'Esse campo é obrigatorio',
         'name.min': 'O nome deve ter mais que 2 caracteres'
@@ -19,7 +18,7 @@ class UserController {
       }, message)
 
       if(validation.fails()) {
-        return response.status(401).send({ message: validation.messages() })
+        return response.status(400).send({ message: validation.messages() })
       }
 
       const data = request.only(["name", "email", "password"])
@@ -28,9 +27,18 @@ class UserController {
 
       return user
     } catch (err) {
-      return response.status(500).send({ error: `Erro: ${err.message}`})
+      return response.status(400).send({ error: `Erro: ${err.message}`})
     }
   }
+
+  async show({ response, auth }) {
+    try {
+      return auth.getUser()
+    } catch (error) {
+      return response.status(401)
+    }
+  }
+
   async login({ request, response, auth }) {
     const { email, password } = request.all()
 
