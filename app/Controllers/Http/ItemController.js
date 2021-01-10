@@ -1,5 +1,7 @@
 'use strict'
 
+const getFileBase64 = require('../../../utils/getFileBase64')
+
 const NewItem = use('App/Models/NewItem')
 const Item = use('App/Models/Item')
 const { validateAll } = use('Validator')
@@ -60,6 +62,7 @@ class ItemController {
       start_date,
       end_date,
       sold,
+      page = 1,
      } = request.get()
 
     const itemsQuery = Item.query().where('user_id', auth.user.id)
@@ -83,9 +86,21 @@ class ItemController {
     const items = await itemsQuery
       .with('category')
       .with('newItem.provider')
-      .fetch()
+      .paginate(page)
 
-    return items
+    for (const [index, item] of items.rows.entries()) {
+      if (item.photo_name) {
+        const { file } = await getFileBase64(item.photo_name)
+        items.rows[index].photo = file
+      } else {
+        items.rows[index].photo = null
+      }
+    }
+
+    return { products: {
+      items: items.rows,
+      pages: items.pages,
+    }}
   }
 
   async store ({ request, response , auth}) {
