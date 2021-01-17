@@ -18,6 +18,7 @@ class SellSchema extends Schema {
         .unsigned()
         .references('id')
         .inTable('users')
+      table.float('total_price').notNullable()
       table.timestamp('deleted_at').nullable()
       table.timestamps()
     })
