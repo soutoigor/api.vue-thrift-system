@@ -134,18 +134,23 @@ class SellController {
         items,
       } = request.all()
 
-      const itemsToUpdate = await Item
+      const itemsToUpdate = (await Item
         .query()
         .whereIn('id', items)
-        .fetch()
+        .with('newItem')
+        .fetch()).toJSON()
 
-      const soldItems = itemsToUpdate.rows.filter(item => item.sold)
+      const soldItems = itemsToUpdate.filter(item => item.sold)
 
       if (soldItems.length > 0) {
         throw { message: 'Erro, remova os itens que ja foram vendidos' }
       }
 
-      const total_price = itemsToUpdate.rows.reduce((acc, item) => acc + item.price, 0)
+      const total_price = itemsToUpdate.reduce((acc, item) => acc + item.price, 0)
+      const total_cost = itemsToUpdate.reduce(
+        (acc, item) => acc + item.newItem.buy_price,
+        0,
+      )
 
       const sell = await Sell.create({
         date,
@@ -153,6 +158,7 @@ class SellController {
         client_id,
         user_id: auth.user.id,
         total_price,
+        total_cost,
       })
 
       const itemSells = items.map(item => ({
@@ -221,6 +227,28 @@ class SellController {
     await sell.delete()
 
     return {}
+  }
+
+  async total ({ request, auth }) {
+    const {
+      start_date,
+      end_date,
+    } = request.get()
+
+    const sellQuery = Sell.query().where('user_id', auth.user.id)
+
+    if (start_date && end_date) {
+      sellQuery.whereBetween('date', [start_date, end_date])
+    }
+
+    const items = (await sellQuery.fetch()).toJSON()
+
+    const total = items.reduce(
+      (acc, item) => acc + (item.total_price - item.total_cost),
+      0,
+    )
+
+    return { total }
   }
 }
 
