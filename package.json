@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "ENV_SILENT=true node server.js",
+    "container": "docker run -d -p 5432:5432 --name market -e POSTGRES_PASSWORD=123123 postgres",
     "test": "node ace test"
   },
   "keywords": [
