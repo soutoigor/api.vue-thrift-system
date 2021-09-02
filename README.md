@@ -17,7 +17,7 @@ If you change some value, remember to change in the `.env` too. ;)
 
 - Run migrations:
 ```bash
-node ace migrate:run
+node ace migration:run
 ```
 
 - Run the server:
